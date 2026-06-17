@@ -32,8 +32,8 @@ env:
   TF_VAR_pve_token_id: ${{ vars.PVE_TOKEN_ID }}
   TF_VAR_pve_token_secret: ${{ secrets.PVE_TOKEN_SECRET }}
   # MinIO backend credentials
-  AWS_ACCESS_KEY_ID: ${{ vars.MINIO_ACCESS_KEY }}
-  AWS_SECRET_ACCESS_KEY: ${{ vars.MINIO_SECRET_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
 
 jobs:
   plan:
@@ -55,6 +55,13 @@ jobs:
 
       - name: Terraform fmt
         run: terraform fmt -recursive -check -diff
+
+      - name: Check backend credentials
+        run: |
+          if [[ -z "${AWS_ACCESS_KEY_ID}" || -z "${AWS_SECRET_ACCESS_KEY}" ]]; then
+            echo "Missing MinIO backend credentials. Configure MINIO_ACCESS_KEY and MINIO_SECRET_KEY in repository secrets." >&2
+            exit 1
+          fi
 
       - name: Terraform init
         run: terraform init -input=false
