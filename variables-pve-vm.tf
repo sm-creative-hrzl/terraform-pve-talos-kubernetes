@@ -81,19 +81,19 @@ variable "worker_count" {
 variable "control_plane_cpu" {
   description = "vCPU cores per control-plane node."
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "control_plane_memory" {
   description = "Memory (MiB) per control-plane node."
   type        = number
-  default     = 8192
+  default     = 2048
 }
 
 variable "control_plane_disk_size" {
   description = "Boot disk size (GiB) per control-plane node."
   type        = number
-  default     = 50
+  default     = 32
 }
 
 # --- Worker VM specs ---------------------------------------------------------
@@ -101,19 +101,19 @@ variable "control_plane_disk_size" {
 variable "worker_cpu" {
   description = "vCPU cores per worker node."
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "worker_memory" {
   description = "Memory (MiB) per worker node."
   type        = number
-  default     = 16384
+  default     = 2048
 }
 
 variable "worker_disk_size" {
   description = "Boot disk size (GiB) per worker node."
   type        = number
-  default     = 100
+  default     = 50
 }
 
 # --- VMID / IP allocation ----------------------------------------------------

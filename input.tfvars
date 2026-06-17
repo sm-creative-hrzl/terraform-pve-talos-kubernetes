@@ -12,11 +12,11 @@
 ###############################################################################
 
 # --- Proxmox connection ------------------------------------------------------
-pve_api_url      = "https://pve01.example.com:8006/"
-pve_token_id     = "root@pam!terraform" # better: TF_VAR_pve_token_id
-pve_token_secret = "REPLACE-ME"         # better: TF_VAR_pve_token_secret
+# pve_api_url      = "https://10.10.20.21:8006/" # TF_VAR_PVE_API_URL
+# pve_token_id     = "root@pam!terraform" # better: TF_VAR_pve_token_id
+# pve_token_secret = "REPLACE-ME"         # better: TF_VAR_pve_token_secret
 
-pve_node = "pve01"
+pve_node = "pve-nzxt"
 
 # --- Talos template ----------------------------------------------------------
 template_name = "talos-template"
@@ -29,7 +29,7 @@ gateway      = "10.10.20.1"
 dns_servers  = ["10.10.20.1", "1.1.1.1"]
 
 # Shared control-plane VIP — must be free and outside the MetalLB pool.
-cluster_endpoint = "10.10.20.10"
+cluster_endpoint = "10.10.20.108"
 
 # --- Cluster identity & sizing ----------------------------------------------
 cluster_name = "homelab"
