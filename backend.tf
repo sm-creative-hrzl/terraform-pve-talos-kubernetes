@@ -29,5 +29,10 @@ terraform {
     skip_credentials_validation = true
     skip_metadata_api_check     = true
     skip_region_validation      = true
+
+    # MinIO has no STS/IAM, so the backend cannot look up an AWS account ID.
+    # Without this it falls back to STS:GetCallerIdentity and iam:ListRoles,
+    # both of which MinIO rejects with 403 InvalidClientTokenId.
+    skip_requesting_account_id = true
   }
 }
