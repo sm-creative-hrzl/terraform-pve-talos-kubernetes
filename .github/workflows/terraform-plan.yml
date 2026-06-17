@@ -1,7 +1,7 @@
 name: terraform-plan
 
-# Runs on every pull request: format check, validate, and a speculative plan.
-# The plan is uploaded as an artifact for review.
+# Runs on pull requests to main OR manually on any branch via workflow_dispatch.
+# Performs: format check, validate, and a speculative plan uploaded as artifact.
 #
 # NOTE: Talking to a homelab Proxmox/Talos network usually requires a
 # self-hosted runner with network reachability. Swap `runs-on` accordingly.
@@ -14,6 +14,13 @@ on:
       - "**.tftpl"
       - "manifests/**"
       - ".github/workflows/**"
+  workflow_dispatch:
+    inputs:
+      var_file:
+        description: "Var file to pass to terraform plan (e.g. input.tfvars)"
+        required: false
+        default: "input.tfvars"
+        type: string
 
 permissions:
   contents: read
@@ -47,12 +54,18 @@ jobs:
         run: terraform validate -no-color
 
       - name: Terraform plan
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: |
+          VAR_FILE="${{ inputs.var_file }}"
+          EXTRA_ARGS=""
+          if [[ -n "${VAR_FILE}" && -f "${VAR_FILE}" ]]; then
+            EXTRA_ARGS="-var-file=${VAR_FILE}"
+          fi
+          terraform plan -input=false -no-color -out=tfplan ${EXTRA_ARGS}
         continue-on-error: false
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan
+          name: tfplan-${{ github.ref_name }}
           path: tfplan
           retention-days: 7
