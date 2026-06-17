@@ -1,5 +1,5 @@
 ###############################################################################
-# Kubernetes add-on variables (Cilium, MetalLB, ingress-nginx, cert-manager)
+# Kubernetes add-on variables (Cilium, MetalLB, Traefik, cert-manager)
 ###############################################################################
 
 # --- Toggles ----------------------------------------------------------------
@@ -16,8 +16,8 @@ variable "enable_metallb" {
   default     = true
 }
 
-variable "enable_ingress_nginx" {
-  description = "Install the ingress-nginx controller."
+variable "enable_traefik" {
+  description = "Install the Traefik ingress controller."
   type        = bool
   default     = true
 }
@@ -42,10 +42,10 @@ variable "metallb_version" {
   default     = "0.14.9"
 }
 
-variable "ingress_nginx_version" {
-  description = "ingress-nginx Helm chart version."
+variable "traefik_version" {
+  description = "Traefik Helm chart version."
   type        = string
-  default     = "4.12.0"
+  default     = "33.2.1"
 }
 
 variable "cert_manager_version" {

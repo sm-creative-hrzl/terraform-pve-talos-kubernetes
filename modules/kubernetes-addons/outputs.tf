@@ -5,10 +5,10 @@
 output "installed_addons" {
   description = "Map of add-on => installed flag."
   value = {
-    cilium        = var.enable_cilium
-    metallb       = var.enable_metallb
-    ingress_nginx = var.enable_ingress_nginx
-    cert_manager  = var.enable_cert_manager
+    cilium       = var.enable_cilium
+    metallb      = var.enable_metallb
+    traefik      = var.enable_traefik
+    cert_manager = var.enable_cert_manager
   }
 }
 

@@ -80,23 +80,23 @@ resource "kubectl_manifest" "metallb_l2" {
   depends_on = [kubectl_manifest.metallb_pool]
 }
 
-# --- ingress-nginx ----------------------------------------------------------
+# --- Traefik (ingress controller) -------------------------------------------
 
-resource "helm_release" "ingress_nginx" {
-  count = var.enable_ingress_nginx ? 1 : 0
+resource "helm_release" "traefik" {
+  count = var.enable_traefik ? 1 : 0
 
-  name             = "ingress-nginx"
-  repository       = "https://kubernetes.github.io/ingress-nginx"
-  chart            = "ingress-nginx"
-  version          = var.ingress_nginx_version
-  namespace        = "ingress-nginx"
+  name             = "traefik"
+  repository       = "https://traefik.github.io/charts"
+  chart            = "traefik"
+  version          = var.traefik_version
+  namespace        = "traefik"
   create_namespace = true
 
   wait    = true
   timeout = 300
 
   values = [
-    file("${var.manifests_path}/ingress-nginx/values.yaml")
+    file("${var.manifests_path}/traefik/values.yaml")
   ]
 
   # Needs the CNI up, and a MetalLB pool to get an external IP.

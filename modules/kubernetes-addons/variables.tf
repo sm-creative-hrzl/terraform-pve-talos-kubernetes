@@ -34,7 +34,7 @@ variable "enable_metallb" {
   default = true
 }
 
-variable "enable_ingress_nginx" {
+variable "enable_traefik" {
   type    = bool
   default = true
 }
@@ -54,7 +54,7 @@ variable "metallb_version" {
   type = string
 }
 
-variable "ingress_nginx_version" {
+variable "traefik_version" {
   type = string
 }
 

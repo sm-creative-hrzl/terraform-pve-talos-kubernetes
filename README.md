@@ -8,7 +8,7 @@ Production-quality Infrastructure-as-Code that provisions and manages a
 2. Generates and applies Talos machine configs (no manual `talosctl`).
 3. Bootstraps etcd / Kubernetes automatically.
 4. Retrieves the kubeconfig + talosconfig.
-5. Installs Cilium, MetalLB, ingress-nginx and cert-manager.
+5. Installs Cilium, MetalLB, Traefik and cert-manager.
 
 Scaling is a one-line change (`worker_count`), and the whole cluster can be
 destroyed and recreated from scratch. Everything is GitOps-friendly and runnable
@@ -41,7 +41,7 @@ flowchart TD
         VIP{{Control-plane VIP<br/>cluster_endpoint}}
         CNI[Cilium<br/>kube-proxy replacement]
         LB[MetalLB]
-        ING[ingress-nginx]
+        ING[Traefik]
         CM[cert-manager]
     end
 
@@ -61,7 +61,7 @@ flowchart TD
 | --------------------- | ------------------------------------------------------------------- |
 | `pve-vm`              | Clone one VM from the Talos template, set static IP via cloud-init.  |
 | `talos-cluster`       | Secrets → machine configs → apply → bootstrap → kubeconfig + VIP.    |
-| `kubernetes-addons`   | Helm releases for Cilium/MetalLB/ingress-nginx/cert-manager.        |
+| `kubernetes-addons`   | Helm releases for Cilium/MetalLB/Traefik/cert-manager.              |
 
 Root config is split by technology: `resources-pve-vm.tf`, `resources-talos.tf`,
 `resources-kubernetes.tf`, `resources-network.tf`, `resources-storage.tf`, each
@@ -251,7 +251,7 @@ kubectl get pods -A
 - **Talos:** bump `talos_version` and roll nodes with
   `talosctl upgrade --image factory.talos.dev/.../<ver> -n <node>` one at a time
   (control planes last). Re-build the template for new clones.
-- **Add-ons:** bump `cilium_version` / `metallb_version` / `ingress_nginx_version`
+- **Add-ons:** bump `cilium_version` / `metallb_version` / `traefik_version`
   / `cert_manager_version` and `terraform apply`.
 
 Always upgrade one node at a time and verify `kubectl get nodes` / `talosctl
