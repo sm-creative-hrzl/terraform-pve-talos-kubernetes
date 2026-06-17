@@ -61,9 +61,14 @@ jobs:
 
       - name: Terraform plan
         run: |
+          # workflow_dispatch sets inputs.var_file; PR triggers do not, so fall
+          # back to input.tfvars which is committed and contains all required vars.
           VAR_FILE="${{ inputs.var_file }}"
+          if [[ -z "${VAR_FILE}" ]]; then
+            VAR_FILE="input.tfvars"
+          fi
           EXTRA_ARGS=""
-          if [[ -n "${VAR_FILE}" && -f "${VAR_FILE}" ]]; then
+          if [[ -f "${VAR_FILE}" ]]; then
             EXTRA_ARGS="-var-file=${VAR_FILE}"
           fi
           terraform plan -input=false -no-color -out=tfplan ${EXTRA_ARGS}
