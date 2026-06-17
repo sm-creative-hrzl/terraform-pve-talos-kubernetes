@@ -1,0 +1,60 @@
+name: terraform-apply
+
+# Applies on every push to main (GitOps). Secrets are injected as TF_VAR_*.
+#
+# NOTE: This must run on a runner that can reach the Proxmox API and the Talos
+# node network — almost always a self-hosted runner in the homelab.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.tf"
+      - "**.tftpl"
+      - "manifests/**"
+
+# Prevent overlapping applies from racing on the same state.
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_pve_api_url: ${{ secrets.PVE_API_URL }}
+  TF_VAR_pve_token_id: ${{ secrets.PVE_TOKEN_ID }}
+  TF_VAR_pve_token_secret: ${{ secrets.PVE_TOKEN_SECRET }}
+
+jobs:
+  apply:
+    runs-on: [self-hosted] # needs reachability to Proxmox + node network
+    environment: production # add required reviewers for manual approval gate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ">=1.9.0"
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate -no-color
+
+      - name: Terraform apply
+        run: terraform apply -input=false -auto-approve -no-color
+
+      - name: Export kubeconfig artifact (sensitive)
+        run: terraform output -raw kubeconfig > kubeconfig
+
+      - name: Upload kubeconfig
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubeconfig
+          path: kubeconfig
+          retention-days: 1

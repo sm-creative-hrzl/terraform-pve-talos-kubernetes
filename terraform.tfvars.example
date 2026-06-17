@@ -1,0 +1,55 @@
+###############################################################################
+# terraform.tfvars.example
+#
+# Copy to terraform.tfvars and fill in the values for YOUR environment.
+# Only the values below are environment-specific; everything else has sane,
+# opinionated defaults in the variables-*.tf files.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# Secrets (tokens) should preferably be supplied via environment variables
+# instead of this file:
+#   export TF_VAR_pve_token_id="root@pam!terraform"
+#   export TF_VAR_pve_token_secret="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+###############################################################################
+
+# --- Proxmox connection ------------------------------------------------------
+pve_api_url      = "https://pve01.example.com:8006/"
+pve_token_id     = "root@pam!terraform"          # better: TF_VAR_pve_token_id
+pve_token_secret = "REPLACE-ME"                  # better: TF_VAR_pve_token_secret
+
+pve_node = "pve01"
+
+# --- Talos template ----------------------------------------------------------
+template_name = "talos-template"
+
+# --- Networking --------------------------------------------------------------
+network_bridge = "vmbr0"
+
+node_network = "192.168.10.0/24"
+gateway      = "192.168.10.1"
+dns_servers  = ["192.168.10.1", "1.1.1.1"]
+
+# Shared control-plane VIP — must be free and outside the MetalLB pool.
+cluster_endpoint = "192.168.10.10"
+
+# --- Cluster identity & sizing ----------------------------------------------
+cluster_name = "homelab"
+
+control_plane_count = 3
+worker_count        = 3
+
+# --- MetalLB LoadBalancer pool ----------------------------------------------
+metallb_pool_start = "192.168.10.200"
+metallb_pool_end   = "192.168.10.220"
+
+###############################################################################
+# Everything below is OPTIONAL — defaults are usually fine. Uncomment to tune.
+###############################################################################
+# vm_datastore_id    = "local-lvm"
+# install_disk       = "/dev/sda"
+# talos_version      = "v1.9.2"
+# kubernetes_version = "v1.32.0"
+# worker_cpu         = 4
+# worker_memory      = 16384
+# worker_disk_size   = 100

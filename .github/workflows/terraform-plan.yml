@@ -1,0 +1,58 @@
+name: terraform-plan
+
+# Runs on every pull request: format check, validate, and a speculative plan.
+# The plan is uploaded as an artifact for review.
+#
+# NOTE: Talking to a homelab Proxmox/Talos network usually requires a
+# self-hosted runner with network reachability. Swap `runs-on` accordingly.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.tf"
+      - "**.tftpl"
+      - "manifests/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_pve_api_url: ${{ secrets.PVE_API_URL }}
+  TF_VAR_pve_token_id: ${{ secrets.PVE_TOKEN_ID }}
+  TF_VAR_pve_token_secret: ${{ secrets.PVE_TOKEN_SECRET }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest # change to [self-hosted] for homelab network access
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ">=1.9.0"
+
+      - name: Terraform fmt
+        run: terraform fmt -recursive -check -diff
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate -no-color
+
+      - name: Terraform plan
+        run: terraform plan -input=false -no-color -out=tfplan
+        continue-on-error: false
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+          retention-days: 7

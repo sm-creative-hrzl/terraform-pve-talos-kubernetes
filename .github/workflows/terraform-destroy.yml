@@ -1,0 +1,55 @@
+name: terraform-destroy
+
+# Manual-only. Destroys the ENTIRE cluster. Guarded by an explicit confirmation
+# input so it can never run by accident.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'true' to confirm you want to DESTROY the cluster"
+        required: true
+        default: "false"
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_pve_api_url: ${{ secrets.PVE_API_URL }}
+  TF_VAR_pve_token_id: ${{ secrets.PVE_TOKEN_ID }}
+  TF_VAR_pve_token_secret: ${{ secrets.PVE_TOKEN_SECRET }}
+
+jobs:
+  destroy:
+    # Gate the entire job on the confirmation input AND an optional repo var.
+    if: ${{ inputs.confirm == 'true' }}
+    runs-on: [self-hosted] # needs reachability to Proxmox + node network
+    environment: production # add required reviewers for an approval gate
+    steps:
+      - name: Verify confirmation
+        run: |
+          if [[ "${{ inputs.confirm }}" != "true" ]]; then
+            echo "Confirmation not provided (expected 'true'). Aborting." >&2
+            exit 1
+          fi
+          if [[ "${{ vars.DESTROY_CLUSTER }}" != "true" ]]; then
+            echo "Repository variable DESTROY_CLUSTER must be set to 'true' to allow destroy." >&2
+            exit 1
+          fi
+          echo "Confirmation accepted. Proceeding with destroy."
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ">=1.9.0"
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform destroy
+        run: terraform destroy -input=false -auto-approve -no-color

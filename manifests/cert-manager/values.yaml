@@ -1,0 +1,21 @@
+# cert-manager Helm values.
+
+# Install the CRDs as part of the chart so no separate kubectl apply is needed.
+crds:
+  enabled: true
+  keep: true
+
+replicaCount: 1
+
+# Required so the webhook can be reached when kube-proxy is replaced by Cilium.
+webhook:
+  replicaCount: 1
+
+prometheus:
+  enabled: false
+
+# Recommended resource floor for a small homelab cluster.
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
