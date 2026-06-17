@@ -33,7 +33,7 @@ env:
 jobs:
   apply:
     runs-on: [self-hosted] # needs reachability to Proxmox + node network
-    environment: production # add required reviewers for manual approval gate
+    environment: homelab # provides MinIO + Proxmox secrets/vars; add reviewers for an approval gate
     steps:
       - name: Checkout
         uses: actions/checkout@v4

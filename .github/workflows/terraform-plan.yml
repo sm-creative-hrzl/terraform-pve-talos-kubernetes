@@ -38,6 +38,7 @@ env:
 jobs:
   plan:
     runs-on: [self-hosted]
+    environment: homelab # provides MinIO + Proxmox secrets/vars
     steps:
       - name: Checkout
         uses: actions/checkout@v4
