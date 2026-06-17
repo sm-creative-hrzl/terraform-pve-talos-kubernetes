@@ -5,18 +5,18 @@
 variable "node_network" {
   description = "CIDR of the LAN segment the nodes live on. Node IPs are derived from this with cidrhost()."
   type        = string
-  default     = "192.168.10.0/24"
+  default     = "10.10.20.0/24"
 
   validation {
     condition     = can(cidrhost(var.node_network, 0))
-    error_message = "node_network must be a valid CIDR, e.g. 192.168.10.0/24."
+    error_message = "node_network must be a valid CIDR, e.g. 10.10.20.0/24."
   }
 }
 
 variable "gateway" {
   description = "Default gateway for the node network."
   type        = string
-  default     = "192.168.10.1"
+  default     = "10.10.20.1"
 }
 
 variable "dns_servers" {

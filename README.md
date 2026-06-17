@@ -80,7 +80,7 @@ These opinionated defaults likely need adjusting for **your** Proxmox setup
 | Disk bus / dev path | `scsi0` / `/dev/sda` | `disk_interface`, `install_disk`     |
 | Network bridge      | `vmbr0`        | `network_bridge`                           |
 | Talos template      | `talos-template` (resolved to VMID) | `template_name` / `template_id` |
-| Node subnet         | `192.168.10.0/24` | `node_network`, `gateway`, `dns_servers`|
+| Node subnet         | `10.10.20.0/24` | `node_network`, `gateway`, `dns_servers`|
 | Control-plane VIP   | n/a (required) | `cluster_endpoint`                         |
 | VMID ranges         | cp `8000+`, worker `9000+` | `control_plane_vmid_base`, `worker_vmid_base` |
 

@@ -59,11 +59,11 @@ variable "cert_manager_version" {
 variable "metallb_pool_start" {
   description = "First address of the MetalLB LoadBalancer pool. Must be outside the node IP range."
   type        = string
-  default     = "192.168.10.200"
+  default     = "10.10.20.200"
 }
 
 variable "metallb_pool_end" {
   description = "Last address of the MetalLB LoadBalancer pool."
   type        = string
-  default     = "192.168.10.220"
+  default     = "10.10.20.220"
 }

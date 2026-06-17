@@ -24,12 +24,12 @@ template_name = "talos-template"
 # --- Networking --------------------------------------------------------------
 network_bridge = "vmbr0"
 
-node_network = "192.168.10.0/24"
-gateway      = "192.168.10.1"
-dns_servers  = ["192.168.10.1", "1.1.1.1"]
+node_network = "10.10.20.0/24"
+gateway      = "10.10.20.1"
+dns_servers  = ["10.10.20.1", "1.1.1.1"]
 
 # Shared control-plane VIP — must be free and outside the MetalLB pool.
-cluster_endpoint = "192.168.10.10"
+cluster_endpoint = "10.10.20.10"
 
 # --- Cluster identity & sizing ----------------------------------------------
 cluster_name = "homelab"
@@ -38,8 +38,8 @@ control_plane_count = 3
 worker_count        = 3
 
 # --- MetalLB LoadBalancer pool ----------------------------------------------
-metallb_pool_start = "192.168.10.200"
-metallb_pool_end   = "192.168.10.220"
+metallb_pool_start = "10.10.20.200"
+metallb_pool_end   = "10.10.20.220"
 
 ###############################################################################
 # Optional overrides — defaults are usually fine. Uncomment to tune.

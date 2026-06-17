@@ -8,7 +8,7 @@ variable "cluster_name" {
 }
 
 variable "cluster_endpoint" {
-  description = "Full https control-plane endpoint URL, e.g. https://192.168.10.10:6443."
+  description = "Full https control-plane endpoint URL, e.g. https://10.10.20.10:6443."
   type        = string
 }
 
