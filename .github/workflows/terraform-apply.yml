@@ -26,6 +26,9 @@ env:
   TF_VAR_pve_api_url: ${{ secrets.PVE_API_URL }}
   TF_VAR_pve_token_id: ${{ secrets.PVE_TOKEN_ID }}
   TF_VAR_pve_token_secret: ${{ secrets.PVE_TOKEN_SECRET }}
+  # MinIO backend credentials
+  AWS_ACCESS_KEY_ID: ${{ vars.MINIO_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
 
 jobs:
   apply:
@@ -35,10 +38,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ">=1.9.0"
+      - name: Install Terraform
+        run: |
+          TF_VERSION="1.9.8"
+          curl -fsSL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip
+          python3 -c "import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extractall('/tmp/tf-bin')"
+          mkdir -p "$HOME/.local/bin"
+          mv /tmp/tf-bin/terraform "$HOME/.local/bin/terraform"
+          chmod +x "$HOME/.local/bin/terraform"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          rm -rf /tmp/terraform.zip /tmp/tf-bin
 
       - name: Terraform init
         run: terraform init -input=false
@@ -47,7 +56,7 @@ jobs:
         run: terraform validate -no-color
 
       - name: Terraform apply
-        run: terraform apply -input=false -auto-approve -no-color
+        run: terraform apply -input=false -auto-approve -no-color -var-file=input.tfvars
 
       - name: Export kubeconfig artifact (sensitive)
         run: terraform output -raw kubeconfig > kubeconfig
