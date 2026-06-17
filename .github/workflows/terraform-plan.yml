@@ -88,6 +88,8 @@ jobs:
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan-${{ github.ref_name }}
+          # Use run_id, not ref_name: PR refs ("1/merge") and slashed branch
+          # names ("feature/foo") contain "/", which artifact names forbid.
+          name: tfplan-${{ github.run_id }}
           path: tfplan
           retention-days: 7
