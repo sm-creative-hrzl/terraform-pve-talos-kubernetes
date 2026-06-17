@@ -34,7 +34,7 @@ env:
 
 jobs:
   plan:
-    runs-on: ubuntu-latest # change to [self-hosted] for homelab network access
+    runs-on: [self-hosted]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
