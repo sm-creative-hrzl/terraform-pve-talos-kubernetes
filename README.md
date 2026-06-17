@@ -4,7 +4,7 @@ Production-quality Infrastructure-as-Code that provisions and manages a
 **Talos Linux** Kubernetes cluster on **Proxmox VE**, end-to-end, with a single
 `terraform apply`:
 
-1. Clones VMs from an existing Talos template on Proxmox.
+1. Creates VMs that boot from the Talos ISO — no pre-built template required.
 2. Generates and applies Talos machine configs (no manual `talosctl`).
 3. Bootstraps etcd / Kubernetes automatically.
 4. Retrieves the kubeconfig + talosconfig.
@@ -28,7 +28,7 @@ flowchart TD
     end
 
     subgraph PVE["Proxmox VE node"]
-        T[(Talos template)]
+        T[(Talos nocloud ISO)]
         CP1[cp-1]
         CP2[cp-2]
         CP3[cp-3]
@@ -46,7 +46,7 @@ flowchart TD
     end
 
     L --> M1
-    M1 -->|clone| T
+    M1 -->|download + boot ISO| T
     M1 --> CP1 & CP2 & CP3 & W1 & W2 & W3
     M2 -->|apply config + bootstrap| CP1
     CP1 & CP2 & CP3 --> VIP
@@ -59,7 +59,7 @@ flowchart TD
 
 | Module                | Responsibility                                                       |
 | --------------------- | ------------------------------------------------------------------- |
-| `pve-vm`              | Clone one VM from the Talos template, set static IP via cloud-init.  |
+| `pve-vm`              | Create one VM booting the Talos ISO, set static IP via cloud-init.   |
 | `talos-cluster`       | Secrets → machine configs → apply → bootstrap → kubeconfig + VIP.    |
 | `kubernetes-addons`   | Helm releases for Cilium/MetalLB/Traefik/cert-manager.              |
 
@@ -79,7 +79,7 @@ These opinionated defaults likely need adjusting for **your** Proxmox setup
 | Storage pool        | `local-lvm`    | `vm_datastore_id`, `cloudinit_datastore_id`|
 | Disk bus / dev path | `scsi0` / `/dev/sda` | `disk_interface`, `install_disk`     |
 | Network bridge      | `vmbr0`        | `network_bridge`                           |
-| Talos template      | `talos-template` (resolved to VMID) | `template_name` / `template_id` |
+| Talos boot ISO      | auto-downloaded to `local` from Image Factory | `iso_datastore_id`, `talos_image_factory_schematic`, `talos_iso_url` |
 | Node subnet         | `10.10.20.0/24` | `node_network`, `gateway`, `dns_servers`|
 | Control-plane VIP   | n/a (required) | `cluster_endpoint`                         |
 | VMID ranges         | cp `8000+`, worker `9000+` | `control_plane_vmid_base`, `worker_vmid_base` |
@@ -96,44 +96,39 @@ The IP plan is **derived**: control planes start at host offset `20`
 - Terraform **>= 1.9**.
 - A Proxmox **API token** (`root@pam!terraform` or a least-privilege role).
 - `kubectl` and (optionally) `talosctl` for day-2 ops.
-- A Talos **template VM** on Proxmox (see below).
+- A Proxmox datastore that accepts `iso` content (default `local`) — Terraform
+  downloads the Talos ISO there automatically. No template VM required.
 
 ---
 
-## 1. Prepare the Talos image / template
+## 1. Talos boot image (automatic — no template)
 
-Use the [Talos Image Factory](https://factory.talos.dev) to get a **nocloud**
-image (so Talos reads the Proxmox cloud-init network config). Then build a
-template on the Proxmox host:
+There is **nothing to prepare manually**. Terraform downloads the Talos
+**nocloud** ISO (so Talos reads the Proxmox cloud-init network config) to the
+`iso_datastore_id` datastore and boots every VM from it. The download URL is
+derived from `talos_version` and `talos_image_factory_schematic`:
 
-```bash
-# On the Proxmox node:
-VER="v1.9.2"
-wget -O /tmp/talos.raw.xz \
-  "https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/${VER}/nocloud-amd64.raw.xz"
-xz -d /tmp/talos.raw.xz
-
-qm create 9999 --name talos-template --memory 4096 --cores 2 \
-  --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-single --ostype l26
-qm importdisk 9999 /tmp/talos.raw local-lvm
-qm set 9999 --scsi0 local-lvm:vm-9999-disk-0
-qm set 9999 --boot order=scsi0
-qm set 9999 --ide2 local-lvm:cloudinit
-qm set 9999 --serial0 socket --vga serial0
-qm set 9999 --agent enabled=1
-qm template 9999
+```
+https://factory.talos.dev/image/<schematic>/<talos_version>/nocloud-amd64.iso
 ```
 
-Set `template_name = "talos-template"` (the data source resolves the VMID).
+On first boot the empty disk falls through to the ISO (Talos maintenance mode),
+the `talos-cluster` module applies the machine config, Talos installs to
+`install_disk`, and subsequent boots come up from the disk.
 
-> The schematic ID in the URL is the default (no extensions). Add the
-> `qemu-guest-agent` extension via the Factory if you want richer agent data.
+Optional overrides (`terraform.tfvars`):
+
+- `talos_image_factory_schematic` — use a custom [Image Factory](https://factory.talos.dev)
+  schematic to bundle system extensions (e.g. `qemu-guest-agent`).
+- `talos_iso_url` — point at a custom or air-gapped mirror instead of the Factory.
+- `iso_datastore_id` — datastore for the ISO; must accept `iso` content (default
+  `local`, **not** block storage like `local-lvm`).
 
 ---
 
 ## 2. Proxmox requirements
 
-- API token with permission to clone/create VMs on the target node and storage.
+- API token with permission to create VMs and download ISOs on the target node.
 - `local-lvm` (or your chosen) datastore with room for the disks.
 - The `vmbr0` bridge (or your chosen) on the node network.
 - Enough capacity: defaults are 3×(4 CPU / 8 GB) control planes + 3×(4 CPU /
@@ -250,7 +245,8 @@ kubectl get pods -A
   `talosctl upgrade-k8s --to <ver>` (or re-apply; Talos reconciles).
 - **Talos:** bump `talos_version` and roll nodes with
   `talosctl upgrade --image factory.talos.dev/.../<ver> -n <node>` one at a time
-  (control planes last). Re-build the template for new clones.
+  (control planes last). Bumping `talos_version` also refreshes the downloaded
+  ISO used to provision any newly added nodes.
 - **Add-ons:** bump `cilium_version` / `metallb_version` / `traefik_version`
   / `cert_manager_version` and `terraform apply`.
 

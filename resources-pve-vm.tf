@@ -16,7 +16,7 @@ module "control_plane" {
   description = "Talos ${each.value.role} node — managed by Terraform"
   tags        = concat(var.common_tags, ["controlplane"])
 
-  template_id = local.template_vm_id
+  iso_file_id = proxmox_virtual_environment_download_file.talos_iso.id
 
   cpu       = each.value.cpu
   memory    = each.value.memory
@@ -44,7 +44,7 @@ module "worker" {
   description = "Talos ${each.value.role} node — managed by Terraform"
   tags        = concat(var.common_tags, ["worker"])
 
-  template_id = local.template_vm_id
+  iso_file_id = proxmox_virtual_environment_download_file.talos_iso.id
 
   cpu       = each.value.cpu
   memory    = each.value.memory

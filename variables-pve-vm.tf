@@ -38,20 +38,6 @@ variable "pve_ssh_username" {
   default     = "root"
 }
 
-# --- Template ---------------------------------------------------------------
-
-variable "template_name" {
-  description = "Name of the existing Talos template VM to clone. Resolved to a VMID via a data source."
-  type        = string
-  default     = "talos-template"
-}
-
-variable "template_id" {
-  description = "Optional explicit template VMID. Used as a fallback if template_name cannot be resolved."
-  type        = number
-  default     = null
-}
-
 # --- Counts -----------------------------------------------------------------
 
 variable "control_plane_count" {

@@ -2,7 +2,7 @@
 # Storage-related resources
 #
 # Validates the storage configuration early so misconfiguration fails fast
-# (before any VM is cloned) rather than mid-apply.
+# (before any VM is created) rather than mid-apply.
 ###############################################################################
 
 resource "terraform_data" "storage_guard" {

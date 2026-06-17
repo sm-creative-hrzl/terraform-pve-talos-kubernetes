@@ -20,8 +20,13 @@ pve_token_secret = "REPLACE-ME"                  # better: TF_VAR_pve_token_secr
 
 pve_node = "pve01"
 
-# --- Talos template ----------------------------------------------------------
-template_name = "talos-template"
+# --- Talos boot image --------------------------------------------------------
+# No template needed: nodes boot from the Talos nocloud ISO, downloaded to
+# Proxmox automatically from the Talos Image Factory for talos_version.
+# Override only for custom schematics or air-gapped mirrors:
+# talos_image_factory_schematic = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"
+# talos_iso_url                 = "https://example.internal/talos/nocloud-amd64.iso"
+# iso_datastore_id              = "local"
 
 # --- Networking --------------------------------------------------------------
 network_bridge = "vmbr0"

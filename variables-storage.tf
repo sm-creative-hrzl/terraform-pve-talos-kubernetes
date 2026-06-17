@@ -19,3 +19,9 @@ variable "disk_interface" {
   type        = string
   default     = "scsi0"
 }
+
+variable "iso_datastore_id" {
+  description = "Proxmox datastore that holds the downloaded Talos ISO. Must support 'iso' content (e.g. local), not block storage like local-lvm."
+  type        = string
+  default     = "local"
+}

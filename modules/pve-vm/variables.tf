@@ -29,9 +29,9 @@ variable "tags" {
   default     = []
 }
 
-variable "template_id" {
-  description = "VMID of the Talos template to clone."
-  type        = number
+variable "iso_file_id" {
+  description = "Proxmox file ID of the Talos ISO to boot from (e.g. local:iso/talos-v1.9.2-nocloud-amd64.iso)."
+  type        = string
 }
 
 variable "cpu" {
