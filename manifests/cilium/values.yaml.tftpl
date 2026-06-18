@@ -1,0 +1,60 @@
+# Cilium Helm values — rendered by Terraform (templatefile).
+# Tuned for Talos Linux: kube-proxy replacement, native routing, Hubble.
+
+# kube-proxy is disabled in the Talos machine config; Cilium fully replaces it.
+kubeProxyReplacement: true
+
+# Point Cilium at the Kubernetes API VIP (no kube-proxy means it cannot use the
+# in-cluster Service to reach the API server during startup).
+k8sServiceHost: ${k8s_service_host}
+k8sServicePort: 6443
+
+# Native routing (no overlay/tunnel) — requires the pod CIDR to be routable
+# between nodes; autoDirectNodeRoutes installs the routes automatically.
+routingMode: native
+ipv4NativeRoutingCIDR: ${pod_cidr}
+autoDirectNodeRoutes: true
+
+ipam:
+  mode: kubernetes
+
+# Talos mounts cgroups itself; do not let Cilium remount.
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+# Talos has a read-only rootfs; grant Cilium the capabilities it needs.
+securityContext:
+  capabilities:
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
+# Observability.
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+
+operator:
+  replicas: 1
+
+# Run the operator on control-plane nodes so it is available before workers join.
+nodeinit:
+  enabled: false

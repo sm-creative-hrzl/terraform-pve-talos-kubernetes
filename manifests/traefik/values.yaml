@@ -1,0 +1,66 @@
+# Traefik Helm values.
+# Exposed via a MetalLB LoadBalancer service. Replaces the now-EOL ingress-nginx.
+
+deployment:
+  replicas: 2
+
+# Expose Traefik through MetalLB.
+service:
+  type: LoadBalancer
+  spec:
+    externalTrafficPolicy: Local
+
+# Register Traefik as the default IngressClass so plain Ingress objects work,
+# alongside Traefik's native IngressRoute CRD.
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+
+# Entry points. websecure terminates TLS; web redirects to it.
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    redirectTo:
+      port: websecure
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443
+    tls:
+      enabled: true
+
+# Spread replicas across nodes.
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: traefik
+
+# Enable the dashboard (ClusterIP only; expose it yourself via an IngressRoute).
+ingressRoute:
+  dashboard:
+    enabled: true
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+  kubernetesIngress:
+    enabled: true
+    publishedService:
+      enabled: true
+
+metrics:
+  prometheus:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi

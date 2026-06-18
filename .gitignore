@@ -1,0 +1,22 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+tfplan
+*.tfplan
+
+# Secrets / user values
+terraform.tfvars
+*.auto.tfvars
+
+# Generated credentials
+kubeconfig
+talosconfig
+node-inventory.hosts
+
+# Editor
+.idea/
+.vscode/
+*.swp
