@@ -119,11 +119,11 @@ variable "worker_vmid_base" {
 variable "control_plane_ip_offset" {
   description = "Host offset within node_network for the first control-plane node (e.g. 20 -> x.x.x.20)."
   type        = number
-  default     = 20
+  default     = 230
 }
 
 variable "worker_ip_offset" {
   description = "Host offset within node_network for the first worker node (e.g. 30 -> x.x.x.30)."
   type        = number
-  default     = 30
+  default     = 240
 }
