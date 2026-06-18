@@ -58,12 +58,7 @@ jobs:
       - name: Terraform apply
         run: terraform apply -input=false -auto-approve -no-color -var-file=input.tfvars
 
-      - name: Export kubeconfig artifact (sensitive)
-        run: terraform output -raw kubeconfig > kubeconfig
-
-      - name: Upload kubeconfig
-        uses: actions/upload-artifact@v4
-        with:
-          name: kubeconfig
-          path: kubeconfig
-          retention-days: 1
+      # NOTE: the kubeconfig is intentionally NOT uploaded as an artifact —
+      # that would expose cluster-admin credentials to anyone with Actions
+      # access. Retrieve it on demand from a trusted host with:
+      #   terraform output -raw kubeconfig > kubeconfig   (or scripts/kubeconfig.sh)
