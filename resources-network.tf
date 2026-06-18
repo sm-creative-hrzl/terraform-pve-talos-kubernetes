@@ -15,10 +15,14 @@ resource "terraform_data" "network_guard" {
     }
 
     precondition {
+      # An IP is inside node_network iff masking it to the subnet prefix yields
+      # the same network address as node_network itself. cidrhost() masks any
+      # host bits, so cidrhost("<ip>/<prefix>", 0) is that IP's network base.
       condition = alltrue([
-        for ip in local.all_node_ips : can(cidrhost(var.node_network, 0)) && cidrnetmask("${ip}/${local.network_prefix}") != ""
+        for ip in local.all_node_ips :
+        cidrhost("${ip}/${local.network_prefix}", 0) == cidrhost(var.node_network, 0)
       ])
-      error_message = "One or more derived node IPs fall outside node_network. Reduce counts or widen the subnet."
+      error_message = "One or more derived node IPs fall outside node_network. Reduce counts/offsets or widen the subnet."
     }
   }
 }

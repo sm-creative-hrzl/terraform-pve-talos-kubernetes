@@ -29,10 +29,11 @@ fi
 echo "==> terraform init"
 terraform init -input=false
 
-echo "==> terraform fmt (check)"
-terraform fmt -recursive -check || {
-  echo "Formatting issues found; run 'terraform fmt -recursive' to fix." >&2
-}
+echo "==> terraform fmt (advisory, non-blocking)"
+# Intentionally non-fatal: a formatting nit shouldn't stop a bring-up. The
+# trailing `|| true` makes that explicit under `set -e`.
+terraform fmt -recursive -check ||
+  echo "NOTE: formatting issues found; run 'terraform fmt -recursive' to fix." >&2 || true
 
 echo "==> terraform validate"
 terraform validate
@@ -41,11 +42,16 @@ echo "==> terraform plan"
 terraform plan -input=false -out=tfplan
 
 echo "==> terraform apply"
-if [[ -n "${AUTO_APPROVE}" ]]; then
-  terraform apply -input=false tfplan
-else
-  terraform apply -input=false tfplan
+# Applying a saved plan file is already non-interactive, so honour
+# --auto-approve ourselves: without it, confirm before touching infrastructure.
+if [[ -z "${AUTO_APPROVE}" ]]; then
+  read -r -p "Apply the plan above? [y/N] " reply
+  if [[ ! "${reply}" =~ ^[Yy]$ ]]; then
+    echo "Aborted. Saved plan left at ./tfplan." >&2
+    exit 1
+  fi
 fi
+terraform apply -input=false tfplan
 
 echo
 echo "==> Cluster bootstrapped. Fetching credentials..."

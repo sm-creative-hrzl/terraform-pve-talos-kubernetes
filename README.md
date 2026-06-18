@@ -131,23 +131,35 @@ Optional overrides (`terraform.tfvars`):
 - API token with permission to create VMs and download ISOs on the target node.
 - `local-lvm` (or your chosen) datastore with room for the disks.
 - The `vmbr0` bridge (or your chosen) on the node network.
-- Enough capacity: defaults are 3×(4 CPU / 8 GB) control planes + 3×(4 CPU /
-  16 GB) workers.
+- Enough capacity: defaults are 3×(2 vCPU / 2 GiB / 32 GiB disk) control planes
+  + 3×(2 vCPU / 2 GiB / 50 GiB disk) workers. Bump `control_plane_*` /
+  `worker_*` for real workloads.
 
 ---
 
 ## 3. GitHub setup (CI/CD)
 
-Add these **secrets** to the repo (Settings → Secrets and variables → Actions):
+The workflows read the **non-sensitive** Proxmox connection details from
+repository **Variables** and only the token secret + backend keys from
+**Secrets** (Settings → Secrets and variables → Actions). Add each under the
+matching tab — putting a variable in the Secrets tab (or vice-versa) leaves the
+corresponding `TF_VAR_*` empty and the run fails with an unset-variable error.
 
-| Secret              | Example                                  |
+**Variables:**
+
+| Variable            | Example                                  |
 | ------------------- | ---------------------------------------- |
 | `PVE_API_URL`       | `https://pve01.example.com:8006/`        |
 | `PVE_TOKEN_ID`      | `root@pam!terraform`                     |
-| `PVE_TOKEN_SECRET`  | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`    |
+| `DESTROY_CLUSTER`   | `true` (only to allow `terraform-destroy`) |
 
-And a **variable** `DESTROY_CLUSTER` (only set to `true` when you intend to allow
-destroys).
+**Secrets:**
+
+| Secret              | Example                                  |
+| ------------------- | ---------------------------------------- |
+| `PVE_TOKEN_SECRET`  | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`    |
+| `MINIO_ACCESS_KEY`  | access key for the MinIO state backend   |
+| `MINIO_SECRET_KEY`  | secret key for the MinIO state backend   |
 
 Workflows:
 
