@@ -23,11 +23,6 @@ locals {
         disk = var.install_disk
       }
       certSANs = [var.cluster_vip]
-      kubelet = {
-        extraArgs = {
-          "rotate-server-certificates" = "true"
-        }
-      }
     }
     cluster = {
       network = {
@@ -166,7 +161,7 @@ data "talos_cluster_health" "this" {
   endpoints            = var.control_plane_ips
 
   timeouts = {
-    read = "10m"
+    read = "20m"
   }
 }
 
