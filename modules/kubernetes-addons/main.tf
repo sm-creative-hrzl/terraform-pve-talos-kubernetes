@@ -44,6 +44,26 @@ resource "helm_release" "cilium" {
 
 # --- MetalLB ----------------------------------------------------------------
 
+# MetalLB speaker pods use hostNetwork and elevated capabilities (NET_ADMIN,
+# NET_RAW). On K8s 1.25+ the Pod Security Admission controller blocks them
+# unless the namespace carries the privileged enforce label.
+resource "kubectl_manifest" "metallb_namespace" {
+  count = var.enable_metallb ? 1 : 0
+
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: metallb-system
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+  YAML
+
+  depends_on = [helm_release.cilium]
+}
+
 resource "helm_release" "metallb" {
   count = var.enable_metallb ? 1 : 0
 
@@ -52,12 +72,12 @@ resource "helm_release" "metallb" {
   chart            = "metallb"
   version          = var.metallb_version
   namespace        = "metallb-system"
-  create_namespace = true
+  create_namespace = false
 
   wait    = true
-  timeout = 300
+  timeout = 600
 
-  depends_on = [helm_release.cilium]
+  depends_on = [helm_release.cilium, kubectl_manifest.metallb_namespace]
 }
 
 # MetalLB pool + L2 advertisement (applied after the CRDs exist).
