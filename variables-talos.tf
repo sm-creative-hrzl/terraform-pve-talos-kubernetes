@@ -20,18 +20,6 @@ variable "install_disk" {
   default     = "/dev/sda"
 }
 
-variable "talos_image_factory_schematic" {
-  description = "Talos Image Factory schematic ID used to build the boot ISO. The default is the stock schematic (no system extensions); generate your own at https://factory.talos.dev to bundle extensions."
-  type        = string
-  default     = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"
-}
-
-variable "talos_iso_url" {
-  description = "Override for the full Talos nocloud ISO download URL. When null it is derived from talos_image_factory_schematic + talos_version. Set this to use a custom or air-gapped mirror."
-  type        = string
-  default     = null
-}
-
 variable "talos_vip_enabled" {
   description = "Enable the Talos shared control-plane VIP at cluster_endpoint (recommended for HA)."
   type        = bool

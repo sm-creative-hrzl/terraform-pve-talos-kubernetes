@@ -9,14 +9,6 @@
 locals {
   network_prefix = tonumber(split("/", var.node_network)[1])
 
-  # URL of the Talos nocloud ISO to download to Proxmox. Defaults to the Talos
-  # Image Factory build for the configured version + schematic; override with
-  # talos_iso_url to point at a custom/air-gapped mirror.
-  talos_iso_url = coalesce(
-    var.talos_iso_url,
-    "https://factory.talos.dev/image/${var.talos_image_factory_schematic}/${var.talos_version}/nocloud-amd64.iso",
-  )
-
   # --- Control-plane node map ------------------------------------------------
   control_plane_nodes = {
     for i in range(var.control_plane_count) :

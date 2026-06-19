@@ -7,7 +7,7 @@
 ###############################################################################
 
 module "control_plane" {
-  source   = "./modules/pve-vm"
+  source   = "github.com/sm-creative-hrzl/pve-vm-module//pve-vm?ref=v1.0.0"
   for_each = local.control_plane_nodes
 
   pve_node    = var.pve_node
@@ -16,7 +16,8 @@ module "control_plane" {
   description = "Talos ${each.value.role} node — managed by Terraform"
   tags        = concat(var.common_tags, ["controlplane"])
 
-  iso_file_id = proxmox_virtual_environment_download_file.talos_iso.id
+  iso_datastore_id = var.iso_datastore_id
+  talos_version    = var.talos_version
 
   cpu       = each.value.cpu
   memory    = each.value.memory
@@ -35,7 +36,7 @@ module "control_plane" {
 }
 
 module "worker" {
-  source   = "./modules/pve-vm"
+  source   = "github.com/sm-creative-hrzl/pve-vm-module//pve-vm?ref=v1.0.0"
   for_each = local.worker_nodes
 
   pve_node    = var.pve_node
@@ -44,7 +45,8 @@ module "worker" {
   description = "Talos ${each.value.role} node — managed by Terraform"
   tags        = concat(var.common_tags, ["worker"])
 
-  iso_file_id = proxmox_virtual_environment_download_file.talos_iso.id
+  iso_datastore_id = var.iso_datastore_id
+  talos_version    = var.talos_version
 
   cpu       = each.value.cpu
   memory    = each.value.memory

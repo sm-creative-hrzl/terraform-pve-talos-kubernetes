@@ -1,0 +1,127 @@
+name: terraform-deploy
+
+# Manual deployment workflow: plan → manual approval → apply.
+# Trigger this instead of relying on the plan workflow to chain into apply.
+
+on:
+    workflow_dispatch:
+        inputs:
+            var_file:
+                description: "Var file to pass to terraform (e.g. input.tfvars)"
+                required: false
+                default: "input.tfvars"
+                type: string
+
+# Prevent overlapping applies from racing on the same state.
+concurrency:
+    group: terraform-apply
+    cancel-in-progress: false
+
+permissions:
+    contents: read
+    actions: read
+
+env:
+    TF_IN_AUTOMATION: "true"
+    TF_VERSION: ${{ vars.TF_VERSION }}
+    TF_VAR_pve_api_url: ${{ vars.PVE_API_URL }}
+    TF_VAR_pve_token_id: ${{ vars.PVE_TOKEN_ID }}
+    TF_VAR_pve_token_secret: ${{ secrets.PVE_TOKEN_SECRET }}
+    # MinIO backend credentials
+    AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+
+jobs:
+    plan:
+        runs-on: [self-hosted]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Install Terraform
+              run: |
+                  TF_ZIP="terraform_${TF_VERSION}_linux_amd64.zip"
+                  curl -fsSL -o "/tmp/${TF_ZIP}" \
+                    "https://releases.hashicorp.com/terraform/${TF_VERSION}/${TF_ZIP}"
+                  mkdir -p "${HOME}/.local/bin"
+                  python3 -c "
+                  import zipfile, sys
+                  zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])
+                  " "/tmp/${TF_ZIP}" "${HOME}/.local/bin"
+                  chmod +x "${HOME}/.local/bin/terraform"
+                  echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
+
+            - name: Check backend credentials
+              run: |
+                  if [[ -z "${AWS_ACCESS_KEY_ID}" || -z "${AWS_SECRET_ACCESS_KEY}" ]]; then
+                    echo "Missing MinIO backend credentials. Configure MINIO_ACCESS_KEY and MINIO_SECRET_KEY as organisation variables/secrets." >&2
+                    exit 1
+                  fi
+
+            - name: Terraform init
+              run: terraform init -input=false
+
+            - name: Terraform validate
+              run: terraform validate
+
+            - name: Terraform plan
+              run: |
+                  VAR_FILE="${{ inputs.var_file }}"
+                  if [[ -z "${VAR_FILE}" ]]; then
+                    VAR_FILE="input.tfvars"
+                  fi
+                  EXTRA_ARGS=""
+                  if [[ -f "${VAR_FILE}" ]]; then
+                    EXTRA_ARGS="-var-file=${VAR_FILE}"
+                  fi
+                  terraform plan -input=false -out=tfplan ${EXTRA_ARGS}
+
+            - name: Upload plan artifact
+              uses: actions/upload-artifact@v7
+              with:
+                  name: tfplan-${{ github.run_id }}
+                  path: tfplan
+                  retention-days: 1
+
+    apply:
+        needs: plan
+        runs-on: [self-hosted]
+        # Pauses here and waits for a reviewer to approve before any step runs.
+        # Configure required reviewers at: Settings → Environments → apply-approval
+        environment: apply-approval
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.sha }}
+
+            - name: Install Terraform
+              run: |
+                  TF_ZIP="terraform_${TF_VERSION}_linux_amd64.zip"
+                  curl -fsSL -o "/tmp/${TF_ZIP}" \
+                    "https://releases.hashicorp.com/terraform/${TF_VERSION}/${TF_ZIP}"
+                  mkdir -p "${HOME}/.local/bin"
+                  python3 -c "
+                  import zipfile, sys
+                  zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])
+                  " "/tmp/${TF_ZIP}" "${HOME}/.local/bin"
+                  chmod +x "${HOME}/.local/bin/terraform"
+                  echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
+
+            - name: Check backend credentials
+              run: |
+                  if [[ -z "${AWS_ACCESS_KEY_ID}" || -z "${AWS_SECRET_ACCESS_KEY}" ]]; then
+                    echo "Missing MinIO backend credentials. Configure MINIO_ACCESS_KEY and MINIO_SECRET_KEY as organisation variables/secrets." >&2
+                    exit 1
+                  fi
+
+            - name: Terraform init
+              run: terraform init -input=false
+
+            - name: Download plan artifact
+              uses: actions/download-artifact@v7
+              with:
+                  name: tfplan-${{ github.run_id }}
+
+            - name: Terraform apply
+              run: terraform apply -input=false -auto-approve tfplan

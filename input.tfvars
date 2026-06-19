@@ -19,12 +19,9 @@
 pve_node = "pve-nzxt"
 
 # --- Talos boot image --------------------------------------------------------
-# VMs boot from the Talos nocloud ISO downloaded automatically (no template).
-# Defaults to the Talos Image Factory build for talos_version. Override only to
-# pin a custom schematic (system extensions) or an air-gapped mirror:
-# talos_image_factory_schematic = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"
-# talos_iso_url                 = "https://example.internal/talos/nocloud-amd64.iso"
-# iso_datastore_id              = "local"
+# VMs boot from the Talos nocloud ISO already present on Proxmox (managed by
+# the pve-vm module). Override iso_datastore_id if your ISO lives elsewhere.
+# iso_datastore_id = "local"
 
 # --- Networking --------------------------------------------------------------
 network_bridge = "vmbr0"
