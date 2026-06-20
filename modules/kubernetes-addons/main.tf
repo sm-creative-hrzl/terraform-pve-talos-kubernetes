@@ -74,8 +74,13 @@ resource "helm_release" "metallb" {
   namespace        = "metallb-system"
   create_namespace = false
 
-  wait    = true
-  timeout = 600
+  wait          = true
+  wait_for_jobs = true
+  timeout       = 900
+
+  values = [
+    file("${var.manifests_path}/metallb/values.yaml")
+  ]
 
   depends_on = [helm_release.cilium, kubectl_manifest.metallb_namespace]
 }

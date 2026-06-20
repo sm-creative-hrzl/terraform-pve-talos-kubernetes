@@ -1,0 +1,20 @@
+speaker:
+  # Bind memberlist to the node's primary IP so peers can reach each other
+  # across Talos nodes (port 7946 TCP/UDP must be open between nodes).
+  memberlist:
+    enabled: true
+
+  # Tolerate control-plane taint so speakers run on every node if needed.
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+
+  frr:
+    enabled: false
+
+controller:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
